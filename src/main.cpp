@@ -37,10 +37,10 @@ class Main {
                 color = RED;
             }
             // Convert vertices to screen space
-            v1 = toScreenSpace(v1);
-            v2 = toScreenSpace(v2);
-            v3 = toScreenSpace(v3);
-            drawTriangle(v1, v2, v3, color);
+            utils::Vector3 screenV1 = toScreenSpace(v1);
+            utils::Vector3 screenV2 = toScreenSpace(v2);
+            utils::Vector3 screenV3 = toScreenSpace(v3);
+            drawTriangle(screenV1, screenV2, screenV3, color);
         }
     }
     // specify vertices in counter-clockwise order
