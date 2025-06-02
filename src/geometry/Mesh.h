@@ -17,6 +17,10 @@ namespace geometry {
         Mesh(const std::string& filename);
         ~Mesh();
 
+        const std::vector<utils::Vector3>& getVertices() const;
+        const utils::Vector3& getVertex(int index) const;
+        const std::vector<Triangle>& getFaces() const;
+
         // primitive meshes
         static Mesh box(float width = 1.0f, float height = 1.0f, float depth = 1.0f);
         static Mesh sphere(float radius = 1.0f, int segments = 16, int rings = 16);

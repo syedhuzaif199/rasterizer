@@ -13,6 +13,21 @@ namespace geometry {
     }
     Mesh::~Mesh() = default;
 
+    const std::vector<utils::Vector3>& Mesh::getVertices() const {
+        return vertices;
+    }
+
+    const utils::Vector3& Mesh::getVertex(int index) const {
+        if (index < 0 || index >= static_cast<int>(vertices.size())) {
+            throw std::out_of_range("Vertex index out of range");
+        }
+        return vertices[index];
+    }
+
+    const std::vector<Triangle>& Mesh::getFaces() const {
+        return faces;
+    }
+
     Mesh Mesh::box(float width, float height, float depth) {
         std::vector<utils::Vector3> vertices = {
             utils::Vector3(-width / 2, -height / 2, -depth / 2),
