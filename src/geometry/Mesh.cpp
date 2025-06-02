@@ -4,31 +4,38 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
-namespace geometry {
+namespace geometry
+{
     Mesh::Mesh() = default;
-    Mesh::Mesh(const std::vector<utils::Vector3>& vertices, const std::vector<Triangle>& faces) : vertices(vertices), faces(faces) {}
-    Mesh::Mesh(const Mesh& other) : vertices(other.vertices) {}
-    Mesh::Mesh(const std::string& filename) {
+    Mesh::Mesh(const std::vector<utils::Vector3> &vertices, const std::vector<Triangle> &faces) : vertices(vertices), faces(faces) {}
+    Mesh::Mesh(const Mesh &other) : vertices(other.vertices) {}
+    Mesh::Mesh(const std::string &filename)
+    {
         loadFromFile(filename);
     }
     Mesh::~Mesh() = default;
 
-    const std::vector<utils::Vector3>& Mesh::getVertices() const {
+    const std::vector<utils::Vector3> &Mesh::getVertices() const
+    {
         return vertices;
     }
 
-    const utils::Vector3& Mesh::getVertex(int index) const {
-        if (index < 0 || index >= static_cast<int>(vertices.size())) {
+    const utils::Vector3 &Mesh::getVertex(int index) const
+    {
+        if (index < 0 || index >= static_cast<int>(vertices.size()))
+        {
             throw std::out_of_range("Vertex index out of range");
         }
         return vertices[index];
     }
 
-    const std::vector<Triangle>& Mesh::getFaces() const {
+    const std::vector<Triangle> &Mesh::getFaces() const
+    {
         return faces;
     }
 
-    Mesh Mesh::box(float width, float height, float depth) {
+    Mesh Mesh::box(float width, float height, float depth)
+    {
         std::vector<utils::Vector3> vertices = {
             utils::Vector3(-width / 2, -height / 2, -depth / 2),
             utils::Vector3(width / 2, -height / 2, -depth / 2),
@@ -37,8 +44,7 @@ namespace geometry {
             utils::Vector3(-width / 2, -height / 2, depth / 2),
             utils::Vector3(width / 2, -height / 2, depth / 2),
             utils::Vector3(width / 2, height / 2, depth / 2),
-            utils::Vector3(-width / 2, height / 2, depth / 2)
-        };
+            utils::Vector3(-width / 2, height / 2, depth / 2)};
         std::vector<Triangle> faces = {
             Triangle(4, 5, 6),
             Triangle(4, 6, 7),
@@ -51,17 +57,19 @@ namespace geometry {
             Triangle(0, 4, 7),
             Triangle(0, 7, 3),
             Triangle(4, 1, 5),
-            Triangle(4, 0, 1)
-        };
+            Triangle(4, 0, 1)};
 
         return Mesh(vertices, faces);
     }
 
-    Mesh Mesh::sphere(float radius, int segments, int rings) {
-        if (rings < 2) {
+    Mesh Mesh::sphere(float radius, int segments, int rings)
+    {
+        if (rings < 2)
+        {
             rings = 2;
         }
-        if(segments < 3) {
+        if (segments < 3)
+        {
             segments = 3;
         }
         int vertCount = segments * (rings - 1) + 2;
@@ -70,9 +78,11 @@ namespace geometry {
         const float thetaInc = 2 * M_PI / segments;
         vertices[0] = utils::Vector3(0, radius, 0);
         int vertIdx = 1;
-        for(int i = 1; i < rings; i++) {
+        for (int i = 1; i < rings; i++)
+        {
             float phi = i * phiInc;
-            for(int j = 0; j < segments; j++) {
+            for (int j = 0; j < segments; j++)
+            {
                 float theta = j * thetaInc;
                 float y = radius * cosf(phi);
                 float x = radius * sinf(phi) * cosf(theta);
@@ -81,15 +91,17 @@ namespace geometry {
                 vertIdx++;
             }
         }
-        vertices[vertCount-1] = utils::Vector3(0, -radius, 0);
+        vertices[vertCount - 1] = utils::Vector3(0, -radius, 0);
 
-        int faceCount = (rings-2) * segments * 2 + 2 * segments;
+        int faceCount = (rings - 2) * segments * 2 + 2 * segments;
         std::vector<Triangle> faces(faceCount);
         int faceIdx = 0;
-        for(int i = 0; i < rings - 2; i++) {
+        for (int i = 0; i < rings - 2; i++)
+        {
             int ring1 = i;
             int ring2 = i + 1;
-            for(int j = 0; j < segments; j++) {
+            for (int j = 0; j < segments; j++)
+            {
                 int seg1 = j;
                 int seg2 = (j + 1) % segments;
                 int vert1 = ring1 * segments + seg1 + 1; // top right
@@ -102,34 +114,80 @@ namespace geometry {
         }
 
         // North Pole
-        for(int i = 0; i < segments; i++) {
-            int vert1 = 0; 
+        for (int i = 0; i < segments; i++)
+        {
+            int vert1 = 0;
             int vert2 = i + 1;
             int vert3 = (i + 1) % segments + 1; // wrap around
             faces[faceIdx++] = Triangle(vert1, vert3, vert2);
         }
 
         // South Pole
-        for(int i = 0; i < segments; i++) {
-            int vert1 = vertCount-1;
+        for (int i = 0; i < segments; i++)
+        {
+            int vert1 = vertCount - 1;
             int vert2 = (rings - 2) * segments + i + 1;
             int vert3 = (rings - 2) * segments + (i + 1) % segments + 1; // wrap around
             faces[faceIdx++] = Triangle(vert1, vert2, vert3);
         }
 
         return Mesh(vertices, faces);
-
     }
 
-    bool Mesh::loadFromFile(const std::string& filepath) {
-        if (filepath.substr(filepath.find_last_of(".") + 1) == "obj") {
+    Mesh Mesh::plane(float xWidth, float zWidth, int xSegments, int zSegments)
+    {
+        if (xSegments < 1)
+        {
+            xSegments = 1;
+        }
+        if (zSegments < 1)
+        {
+            zSegments = 1;
+        }
+
+        float xInc = xWidth / xSegments;
+        float zInc = zWidth / zSegments;
+        int vertCount = (xSegments + 1) * (zSegments + 1);
+        std::vector<utils::Vector3> vertices(vertCount);
+        int idx = 0;
+        for (int i = 0; i <= xSegments; i++)
+        {
+            for (int j = 0; j <= zSegments; j++)
+            {
+                float x = -xWidth / 2 + i * xInc;
+                float z = -zWidth / 2 + j * zInc;
+                vertices[idx++] = utils::Vector3(x, 0, z);
+            }
+        }
+
+        std::vector<Triangle> faces(2 * xSegments * zSegments);
+        idx = 0;
+        for (int i = 0; i < xSegments; i++)
+        {
+            for (int j = 0; j < zSegments; j++)
+            {
+                int v1 = i * (zSegments + 1) + j;
+                int v2 = i * (zSegments + 1) + j + 1;
+                int v3 = (i + 1) * (zSegments + 1) + j;
+                int v4 = (i + 1) * (zSegments + 1) + j + 1;
+                faces[idx++] = Triangle(v1, v2, v3);
+                faces[idx++] = Triangle(v3, v2, v4);
+            }
+        }
+
+        return Mesh(vertices, faces);
+    }
+
+    bool Mesh::loadFromFile(const std::string &filepath)
+    {
+        if (filepath.substr(filepath.find_last_of(".") + 1) == "obj")
+        {
             std::cout << "Loading mesh from " << filepath << std::endl;
 
             // open the file
 
-
             return true;
-        } 
+        }
 
         // other cases
 
@@ -137,19 +195,23 @@ namespace geometry {
         return false;
     }
 
-    bool Mesh::saveToOBJFile(const std::string& filepath) {
+    bool Mesh::saveToOBJFile(const std::string &filepath)
+    {
         // open the file
         std::ofstream file(filepath);
-        if(!file.is_open()) {
+        if (!file.is_open())
+        {
             std::cerr << "Failed to open file for writing: " << filepath << std::endl;
             return false;
         }
 
         // write vertices and faces to the file
-        for (const auto& vertex : vertices) {
+        for (const auto &vertex : vertices)
+        {
             file << "v " << vertex.x << " " << vertex.y << " " << vertex.z << "\n";
         }
-        for (const auto& face : faces) {
+        for (const auto &face : faces)
+        {
             file << "f " << (face.i0 + 1) << " " << (face.i1 + 1) << " " << (face.i2 + 1) << "\n";
         }
         // close the file

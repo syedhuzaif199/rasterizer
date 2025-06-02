@@ -4,3 +4,4 @@ build/
 /libs/raylib/src/*.o
 
 *.obj
+.vscode

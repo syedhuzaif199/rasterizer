@@ -2,7 +2,8 @@
 #include "Vector.h"
 #include "Mesh.h"
 
-int main() {
-    geometry::Mesh sphere = geometry::Mesh::sphere(1.0f, 12, 8);
-    sphere.saveToOBJFile("sphere.obj");
+int main()
+{
+    geometry::Mesh mesh = geometry::Mesh::plane(2.0f, 1.0f, 4, 2);
+    mesh.saveToOBJFile("plane.obj");
 }
