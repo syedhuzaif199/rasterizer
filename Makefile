@@ -1,6 +1,9 @@
 CXX = g++
 CXXFLAGS = -I src/utils -I src/geometry -I libs/raylib/src
-LDFLAGS = -L libs/raylib/src -lraylib 
+LDFLAGS = -L libs/raylib/src -lraylib
+ifeq ($(OS),Windows_NT)
+	LDFLAGS += -lgdi32 -lwinmm
+endif
 SRC = src/main.cpp src/utils/Vector.cpp src/utils/Matrix.cpp src/geometry/Mesh.cpp
 TESTSRC = src/test.cpp src/utils/Vector.cpp src/utils/Matrix.cpp src/geometry/Mesh.cpp
 BUILD_DIR = build
