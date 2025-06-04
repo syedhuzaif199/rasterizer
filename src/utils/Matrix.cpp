@@ -264,6 +264,19 @@ namespace utils
         return translation(vec.x, vec.y, vec.z);
     }
 
+    Matrix4 Matrix4::projection(float fovDegrees, int screenWidth, int screenHeight, float zNear, float zFar)
+    {
+        float aspectRatio = static_cast<float>(screenWidth) / screenHeight;
+        float tanFovInv = 1.0f / tan(fovDegrees * M_PI / 360.0f);
+        Matrix4 matrix = Matrix4(0.0f);
+        matrix.m[0] = tanFovInv / aspectRatio;
+        matrix.m[5] = tanFovInv;
+        matrix.m[10] = (zFar + zNear) / (zFar - zNear);
+        matrix.m[11] = -2 * zNear * zFar / (zFar - zNear);
+        matrix.m[14] = -1.0f;
+        return matrix;
+    }
+
     std::string Matrix4::toString() const
     {
         std::string result = "Matrix4(\n";

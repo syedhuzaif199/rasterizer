@@ -38,6 +38,7 @@ namespace utils
         static Matrix4 rotationZ(float angle);
         static Matrix4 translation(float x, float y, float z);
         static Matrix4 translation(const Vector3 &vec);
+        static Matrix4 projection(float fovDegrees, int screenWidth, int screenHeight, float zNear, float zFar);
 
         std::string toString() const;
         friend std::ostream &operator<<(std::ostream &os, const Matrix4 &mat);
