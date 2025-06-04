@@ -6,9 +6,16 @@ ifeq ($(OS),Windows_NT)
 endif
 BUILD_DIR = build
 
+RAYLIB_DIR = libs/raylib/src
+LIBRAYLIB = $(RAYLIB_DIR)/libraylib.a
+
 .PHONY: all clean
 
-all: $(BUILD_DIR)/main $(BUILD_DIR)/test
+all: $(LIBRAYLIB) $(BUILD_DIR)/main $(BUILD_DIR)/test
+
+$(LIBRAYLIB):
+	@echo "Building Raylib static library..."
+	$(MAKE) -C $(RAYLIB_DIR)
 
 $(BUILD_DIR)/Matrix.o: src/utils/Matrix.cpp
 	mkdir -p $(BUILD_DIR)
