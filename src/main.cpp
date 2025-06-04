@@ -24,15 +24,20 @@ class Main
 public:
     geometry::Mesh mesh;
     utils::Vector4 lightDir;
+    utils::Matrix4 projectionMatrix;
+    utils::Matrix4 translateConstantZ;
     Main(int screenWidth, int screenHeight)
     {
         InitWindow(screenWidth, screenHeight, "Rasterizer");
         SetTargetFPS(60);
-        mesh = geometry::Mesh::sphere(200.0f, 12, 8);
-        // mesh = geometry::Mesh::box(200.0f, 200.0f, 200.0f);
+        // mesh = geometry::Mesh::sphere(200.0f, 12, 8);
+        mesh = geometry::Mesh::box(200.0f, 200.0f, 200.0f);
 
         // value of 'w' coordinate for directions should be 0
         lightDir = utils::Vector4(1.0f, 1.0f, 0.0f, 0.0f).normalized();
+        projectionMatrix = utils::Matrix4::projection(90.0f, screenWidth, screenHeight, -0.1, -1000.0f);
+        translateConstantZ = utils::Matrix4::translation(utils::Vector3(0.0f, 0.0f, -600.0f));
+        std::cout << projectionMatrix << std::endl;
     }
     ~Main()
     {
@@ -64,6 +69,11 @@ public:
             v1 = rotationX * rotationZ * v1;
             v2 = rotationX * rotationZ * v2;
             v3 = rotationX * rotationZ * v3;
+
+            v1 = translateConstantZ * v1;
+            v2 = translateConstantZ * v2;
+            v3 = translateConstantZ * v3;
+
             utils::Vector4 normal = utils::Vector4::cross(v2 - v1, v3 - v1);
             normal.normalize();
 
@@ -72,12 +82,17 @@ public:
             {
                 continue;
             }
+            float brightness = max(0.2, utils::Vector4::dot(normal, lightDir));
+            Color color = ColorFromHSV(0, 0.0f, brightness);
+
+            v1 = projectionMatrix * v1;
+            v2 = projectionMatrix * v2;
+            v3 = projectionMatrix * v3;
+
             // Convert vertices to screen space
             utils::Vector2 screenV1 = toScreenSpace(v1);
             utils::Vector2 screenV2 = toScreenSpace(v2);
             utils::Vector2 screenV3 = toScreenSpace(v3);
-            float brightness = max(0.2, utils::Vector4::dot(normal, lightDir));
-            Color color = ColorFromHSV(0, 0.0f, brightness);
             fillTriangle(screenV1, screenV2, screenV3, color);
         }
     }
@@ -102,8 +117,19 @@ public:
 
     utils::Vector2 toScreenSpace(const utils::Vector4 &v)
     {
+
         // Assuming a simple orthographic projection for now
-        return utils::Vector2(v.x + GetScreenWidth() / 2.0f, -v.y + GetScreenHeight() / 2.0f);
+        utils::Vector2 vScreen = utils::Vector2(v.x, v.y);
+        if (v.w != 0)
+        {
+            vScreen /= v.w;
+        }
+        vScreen += 1.0f;
+        vScreen *= 0.5f;
+        vScreen.x *= GetScreenWidth();
+        vScreen.y = (1 - vScreen.y);
+        vScreen.y *= GetScreenHeight();
+        return vScreen;
     }
 };
 
