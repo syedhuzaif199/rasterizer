@@ -29,6 +29,7 @@ public:
     Main(int screenWidth, int screenHeight)
     {
         InitWindow(screenWidth, screenHeight, "Rasterizer");
+        SetMouseCursor(MOUSE_CURSOR_NOT_ALLOWED);
         SetTargetFPS(60);
         // mesh = geometry::Mesh::sphere(200.0f, 12, 8);
         mesh = geometry::Mesh::box(200.0f, 200.0f, 200.0f);
@@ -78,7 +79,7 @@ public:
             normal.normalize();
 
             // TODO: remove hardcoded camera direction
-            if (normal.dot(utils::Vector3(0, 0, 1)) < 0)
+            if (normal.dot(utils::Vector4(0, 0, 1, 0)) < 0)
             {
                 continue;
             }
