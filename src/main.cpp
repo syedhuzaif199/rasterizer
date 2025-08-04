@@ -19,6 +19,10 @@ float clamp(float value, float minValue, float maxValue)
                                                               : value;
 }
 
+float degreesToRadians(float degrees) {
+    return degrees * PI / 180.0f;
+}
+
 class Main
 {
 public:
@@ -27,8 +31,10 @@ public:
     utils::Matrix4 projectionMatrix;
     utils::Matrix4 translateConstantZ;
     float yaw, pitch;
+    utils::Vector4 cameraPosition = utils::Vector4(0.0f, 0.0f, 0.0f, 1.0f);
     Main(int screenWidth, int screenHeight)
     {
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
         InitWindow(screenWidth, screenHeight, "Rasterizer");
         SetMouseCursor(MOUSE_CURSOR_NOT_ALLOWED);
         SetTargetFPS(60);
@@ -69,24 +75,81 @@ public:
 
     void update()
     {
+
+
         Vector2 mouseDelta = GetMouseDelta();
-        yaw += 0.05 * mouseDelta.x;
-        pitch += 0.05 * mouseDelta.y;
-        pitch = clamp(pitch, -PI/2, PI/2);
+        yaw -= 0.05 * mouseDelta.x;
+        pitch -= 0.05 * mouseDelta.y;
+        pitch = clamp(
+            pitch,
+            degreesToRadians(-85),
+            degreesToRadians(85)
+        );
         // disable fixed rotation
-        // utils::Matrix4 rotationX = utils::Matrix4::rotationX(1 * 0.5 * GetTime());
-        // utils::Matrix4 rotationZ = utils::Matrix4::rotationZ(1 * 1.5 * GetTime());
-        utils::Matrix4 rotationX = utils::Matrix4::rotationX(pitch);
-        utils::Matrix4 rotationY = utils::Matrix4::rotationY(yaw);
+        utils::Matrix4 rotationX = utils::Matrix4::rotationX(0 * 0.5 * GetTime());
+        utils::Matrix4 rotationZ = utils::Matrix4::rotationZ(0 * 1.5 * GetTime());
+
+        utils::Matrix4 rotateCameraX = utils::Matrix4::rotationX(pitch);
+        utils::Matrix4 rotateCameraY= utils::Matrix4::rotationY(yaw);
+        utils::Vector4 cameraLookDir = rotateCameraY * rotateCameraX * utils::Vector4(0, 0, -1, 0);
+        cameraLookDir.normalize();
+        utils::Vector4 cameraRight = utils::Vector4::cross(cameraLookDir, utils::Vector4(0, 1, 0, 0));
+        cameraRight.normalize();
+        utils::Vector4 cameraUp = utils::Vector4::cross(cameraRight, cameraLookDir);
+
+        float cameraSpeedUp = 10.0f;
+        float cameraSpeedRight = 10.0f;
+        float cameraSpeedForward = 10.0f;
+        if(IsKeyDown(KEY_Q)) {
+            cameraPosition.y += cameraSpeedUp * GetFrameTime();
+        }
+
+        if(IsKeyDown(KEY_E)) {
+            cameraPosition.y -= cameraSpeedUp * GetFrameTime();
+        }
+
+        if(IsKeyDown(KEY_A)) {
+            cameraPosition -= cameraRight * cameraSpeedRight * GetFrameTime();
+        }
+
+        if(IsKeyDown(KEY_D)) {
+            cameraPosition += cameraRight * cameraSpeedRight * GetFrameTime();
+        }
+
+        if(IsKeyDown(KEY_W)) {
+            utils::Vector4 worldUp = utils::Vector4(0, 1, 0, 0);
+            utils::Vector4 forward = cameraLookDir -  worldUp * cameraLookDir.dot(worldUp);
+            forward.normalize();
+            cameraPosition += forward * cameraSpeedForward * GetFrameTime();
+        }
+
+        if(IsKeyDown(KEY_S)) {
+            utils::Vector4 worldUp = utils::Vector4(0, 1, 0, 0);
+            utils::Vector4 forward = cameraLookDir -  worldUp * cameraLookDir.dot(worldUp);
+            forward.normalize();
+            cameraPosition -= forward * cameraSpeedForward * GetFrameTime();
+        }
+
+        utils::Matrix4 translateCameraToOrigin = utils::Matrix4::translation(
+            -cameraPosition.x,
+            -cameraPosition.y,
+            -cameraPosition.z
+        );
+        utils::Matrix4 changeBasisToCamera = utils::Matrix4(
+            cameraRight.x, cameraRight.y, cameraRight.z, 0,
+            cameraUp.x, cameraUp.y, cameraUp.z, 0, 
+            -cameraLookDir.x, -cameraLookDir.y, -cameraLookDir.z, 0,
+            0, 0, 0, 1
+        );
+        utils::Matrix4 viewMatrix = changeBasisToCamera * translateCameraToOrigin;
         for (const auto &face : mesh.getFaces())
         {
             utils::Vector4 v1 = utils::Vector4(mesh.getVertex(face.i0));
             utils::Vector4 v2 = utils::Vector4(mesh.getVertex(face.i1));
             utils::Vector4 v3 = utils::Vector4(mesh.getVertex(face.i2));
-            v1 = rotationY * rotationX * v1;
-            v2 = rotationY * rotationX * v2;
-            v3 = rotationY * rotationX * v3;
-
+            v1 = rotationZ * rotationX * v1;
+            v2 = rotationZ * rotationX * v2;
+            v3 = rotationZ * rotationX * v3;
             
 
             v1 = translateConstantZ * v1;
@@ -101,12 +164,17 @@ public:
             // direction to that of the camera's forward (-1 along z in this case).
             // So, the dot product of the normal of the face that is visible with
             // the camera's fowrard cannot be non-negative.
-            if (normal.dot(utils::Vector4(0, 0, -1, 0)) >= 0)
+            // if (normal.dot(utils::Vector4(0, 0, -1, 0)) >= 0)
+            if (normal.dot(cameraLookDir) >= 0)
             {
                 continue;
             }
             float brightness = max(0.2, utils::Vector4::dot(normal, lightDir));
             Color color = ColorFromHSV(0, 0.0f, brightness);
+
+            v1 = viewMatrix * v1;
+            v2 = viewMatrix * v2;
+            v3 = viewMatrix * v3;
 
             v1 = projectionMatrix * v1;
             v2 = projectionMatrix * v2;
