@@ -4,6 +4,7 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <sstream>
 namespace geometry
 {
     Mesh::Mesh() = default;
@@ -184,7 +185,44 @@ namespace geometry
         {
             std::cout << "Loading mesh from " << filepath << std::endl;
 
-            // open the file
+            std::ifstream file(filepath, std::ifstream::in);
+            if(!file.is_open()) {
+                std::cerr << "Failed to open file for reading: " << filepath << std::endl;
+                return false;
+            }
+
+            vertices = std::vector<utils::Vector3>();
+            faces = std::vector<Triangle>();
+            char c;
+            float x, y, z;
+            std::string line;
+            std::getline(file, line);
+            std::istringstream linestream(line);
+            // while((c = file.peek()) == 'v') {
+            while(linestream.peek() == 'v') {
+                linestream >> c >> x >> y >> z;
+                vertices.push_back(utils::Vector3(x, y, z));
+                // std::cout << "v " << x << " " << y << " " << z << std::endl;
+                std::getline(file, line);
+                linestream = std::istringstream(line);
+            }
+
+            int vertCount = vertices.size();
+            int v1, v2, v3;
+            // while((c = file.peek()) == 'f') {
+            while(linestream.peek() == 'f') {
+                linestream >> c >> v1 >> v2 >> v3;
+                if(v1 > vertCount || v2 > vertCount || v3 > vertCount) {
+                    std::cerr << "Invalid vertex index given in obj file. Aborting load operation...";
+                    return false;
+                }
+                faces.push_back(geometry::Triangle(v1 - 1, v2 - 1, v3 - 1));
+                // std::cout << "f " << v1 << " " << v2 << " " << v3 << std::endl;
+                std::getline(file, line);
+                linestream = std::istringstream(line);
+            }
+
+            std::cout << "Mesh data loaded successfully from " << filepath << std::endl;
 
             return true;
         }
@@ -193,6 +231,11 @@ namespace geometry
 
         std::cerr << "Unsupported file format: " << filepath << std::endl;
         return false;
+    }
+
+    Mesh Mesh::loadFromFileStatic(const std::string &filepath)
+    {
+        return Mesh(filepath);
     }
 
     bool Mesh::saveToOBJFile(const std::string &filepath)

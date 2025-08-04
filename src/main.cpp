@@ -26,18 +26,27 @@ public:
     utils::Vector4 lightDir;
     utils::Matrix4 projectionMatrix;
     utils::Matrix4 translateConstantZ;
+    float yaw, pitch;
     Main(int screenWidth, int screenHeight)
     {
         InitWindow(screenWidth, screenHeight, "Rasterizer");
         SetMouseCursor(MOUSE_CURSOR_NOT_ALLOWED);
         SetTargetFPS(60);
-        // mesh = geometry::Mesh::sphere(200.0f, 12, 8);
-        mesh = geometry::Mesh::box(200.0f, 200.0f, 200.0f);
+        // mesh = geometry::Mesh::sphere(1.0f, 12, 8);
+        // mesh = geometry::Mesh::box(1.0f, 1.0f, 1.0f);
 
+        mesh = geometry::Mesh::loadFromFileStatic("models/face.obj");
+
+        for(auto face: mesh.getFaces()) {
+            std::cout << "f " << face.i0+1 << " " << face.i1+1 << " " << face.i2+1 << std::endl;
+        }
+
+        yaw = 0;
+        pitch = 0;
         // value of 'w' coordinate for directions should be 0
         lightDir = utils::Vector4(1.0f, 1.0f, 0.0f, 0.0f).normalized();
         projectionMatrix = utils::Matrix4::projection(90.0f, screenWidth, screenHeight, -0.1, -1000.0f);
-        translateConstantZ = utils::Matrix4::translation(utils::Vector3(0.0f, 0.0f, -600.0f));
+        translateConstantZ = utils::Matrix4::translation(utils::Vector3(0.0f, 0.0f, -4.0f));
         std::cout << projectionMatrix << std::endl;
     }
     ~Main()
@@ -60,16 +69,25 @@ public:
 
     void update()
     {
+        Vector2 mouseDelta = GetMouseDelta();
+        yaw += 0.05 * mouseDelta.x;
+        pitch += 0.05 * mouseDelta.y;
+        pitch = clamp(pitch, -PI/2, PI/2);
+        // disable fixed rotation
+        // utils::Matrix4 rotationX = utils::Matrix4::rotationX(1 * 0.5 * GetTime());
+        // utils::Matrix4 rotationZ = utils::Matrix4::rotationZ(1 * 1.5 * GetTime());
+        utils::Matrix4 rotationX = utils::Matrix4::rotationX(pitch);
+        utils::Matrix4 rotationY = utils::Matrix4::rotationY(yaw);
         for (const auto &face : mesh.getFaces())
         {
-            utils::Matrix4 rotationX = utils::Matrix4::rotationX(0.5 * GetTime());
-            utils::Matrix4 rotationZ = utils::Matrix4::rotationZ(1.5 * GetTime());
             utils::Vector4 v1 = utils::Vector4(mesh.getVertex(face.i0));
             utils::Vector4 v2 = utils::Vector4(mesh.getVertex(face.i1));
             utils::Vector4 v3 = utils::Vector4(mesh.getVertex(face.i2));
-            v1 = rotationX * rotationZ * v1;
-            v2 = rotationX * rotationZ * v2;
-            v3 = rotationX * rotationZ * v3;
+            v1 = rotationY * rotationX * v1;
+            v2 = rotationY * rotationX * v2;
+            v3 = rotationY * rotationX * v3;
+
+            
 
             v1 = translateConstantZ * v1;
             v2 = translateConstantZ * v2;
