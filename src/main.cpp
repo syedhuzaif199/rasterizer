@@ -97,7 +97,11 @@ public:
             normal.normalize();
 
             // TODO: remove hardcoded camera direction
-            if (normal.dot(utils::Vector4(0, 0, 1, 0)) < 0)
+            // NOTE: the face facing the camera must have it's normal in the opposite
+            // direction to that of the camera's forward (-1 along z in this case).
+            // So, the dot product of the normal of the face that is visible with
+            // the camera's fowrard cannot be non-negative.
+            if (normal.dot(utils::Vector4(0, 0, -1, 0)) >= 0)
             {
                 continue;
             }
