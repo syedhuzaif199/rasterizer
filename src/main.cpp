@@ -36,7 +36,7 @@ public:
     {
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
         InitWindow(screenWidth, screenHeight, "Rasterizer");
-        SetMouseCursor(MOUSE_CURSOR_NOT_ALLOWED);
+        HideCursor();
         SetTargetFPS(60);
         // mesh = geometry::Mesh::sphere(1.0f, 12, 8);
         // mesh = geometry::Mesh::box(1.0f, 1.0f, 1.0f);
