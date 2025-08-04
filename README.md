@@ -29,3 +29,6 @@ Or if you are on Windows:
 ```bash
 build\main.exe
 ```
+
+# TODO
+Add custom triangle rendering and a z-buffer
