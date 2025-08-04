@@ -43,17 +43,12 @@ public:
 
         mesh = geometry::Mesh::loadFromFileStatic("models/face.obj");
 
-        for(auto face: mesh.getFaces()) {
-            std::cout << "f " << face.i0+1 << " " << face.i1+1 << " " << face.i2+1 << std::endl;
-        }
-
         yaw = 0;
         pitch = 0;
         // value of 'w' coordinate for directions should be 0
         lightDir = utils::Vector4(1.0f, 1.0f, 0.0f, 0.0f).normalized();
         projectionMatrix = utils::Matrix4::projection(90.0f, screenWidth, screenHeight, -0.1, -1000.0f);
         translateConstantZ = utils::Matrix4::translation(utils::Vector3(0.0f, 0.0f, -4.0f));
-        std::cout << projectionMatrix << std::endl;
     }
     ~Main()
     {
