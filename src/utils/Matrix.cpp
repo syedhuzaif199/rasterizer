@@ -271,9 +271,9 @@ namespace utils
         Matrix4 matrix = Matrix4(0.0f);
         matrix.m[0] = tanFovInv / aspectRatio;
         matrix.m[5] = tanFovInv;
-        matrix.m[10] = (zFar + zNear) / (zFar - zNear);
-        matrix.m[11] = -2 * zNear * zFar / (zFar - zNear);
-        matrix.m[14] = -1.0f;
+        matrix.m[10] = -(zFar + zNear) / (zFar - zNear);
+        matrix.m[11] = -1.0f;                              // Perspective division term
+        matrix.m[14] = 2 * zNear * zFar / (zFar - zNear); // Z translation term
         return matrix;
     }
 

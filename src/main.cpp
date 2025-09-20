@@ -36,12 +36,12 @@ public:
     {
         SetConfigFlags(FLAG_WINDOW_RESIZABLE);
         InitWindow(screenWidth, screenHeight, "Rasterizer");
-        HideCursor();
+        DisableCursor();
         SetTargetFPS(60);
-        // mesh = geometry::Mesh::sphere(1.0f, 12, 8);
+        // mesh = geometry::Mesh::sphere(1.0f, 128, 64);
         // mesh = geometry::Mesh::box(1.0f, 1.0f, 1.0f);
 
-        mesh = geometry::Mesh::loadFromFileStatic("models/face.obj");
+        mesh = geometry::Mesh::loadFromFileStatic("models/suzanne.obj");
 
         yaw = 0;
         pitch = 0;
@@ -59,9 +59,11 @@ public:
     {
         while (!WindowShouldClose())
         {
+            projectionMatrix = utils::Matrix4::projection(90.0f, GetScreenWidth(), GetScreenHeight(), -0.1, -1000.0f);
             BeginDrawing();
             {
                 ClearBackground(BLACK);
+                DrawFPS(10, 10);
                 update();
             }
             EndDrawing();
@@ -73,8 +75,8 @@ public:
 
 
         Vector2 mouseDelta = GetMouseDelta();
-        yaw -= 0.05 * mouseDelta.x;
-        pitch -= 0.05 * mouseDelta.y;
+        yaw -= 0.005 * mouseDelta.x;
+        pitch -= 0.005 * mouseDelta.y;
         pitch = clamp(
             pitch,
             degreesToRadians(-85),
@@ -139,9 +141,9 @@ public:
         utils::Matrix4 viewMatrix = changeBasisToCamera * translateCameraToOrigin;
         for (const auto &face : mesh.getFaces())
         {
-            utils::Vector4 v1 = utils::Vector4(mesh.getVertex(face.i0));
-            utils::Vector4 v2 = utils::Vector4(mesh.getVertex(face.i1));
-            utils::Vector4 v3 = utils::Vector4(mesh.getVertex(face.i2));
+            utils::Vector4 v1 = utils::Vector4(mesh.getVertex(face.i0), 1.0f);
+            utils::Vector4 v2 = utils::Vector4(mesh.getVertex(face.i1), 1.0f);
+            utils::Vector4 v3 = utils::Vector4(mesh.getVertex(face.i2), 1.0f);
             v1 = rotationZ * rotationX * v1;
             v2 = rotationZ * rotationX * v2;
             v3 = rotationZ * rotationX * v3;
@@ -159,8 +161,9 @@ public:
             // direction to that of the camera's forward (-1 along z in this case).
             // So, the dot product of the normal of the face that is visible with
             // the camera's fowrard cannot be non-negative.
-            // if (normal.dot(utils::Vector4(0, 0, -1, 0)) >= 0)
-            if (normal.dot(cameraLookDir) >= 0)
+            utils::Vector4 centroid = (v1 + v2 + v3) / 3.0f; // w stays 1
+            utils::Vector4 viewVec = centroid - cameraPosition; // w becomes 0
+            if (utils::Vector4::dot(normal, viewVec) >= 0.0f)
             {
                 continue;
             }
@@ -191,6 +194,7 @@ public:
             (Vector2){v3.x, v3.y},
             color);
     }
+
     // specify vertices in counter-clockwise order
     void fillTriangle(const utils::Vector2 &v1, const utils::Vector2 &v2, const utils::Vector2 &v3, const Color &color)
     {
